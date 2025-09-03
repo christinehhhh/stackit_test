@@ -1,3 +1,5 @@
+jest.mock('../../services/slackService')
+
 import request from 'supertest'
 import app from '../../app'
 
@@ -78,6 +80,40 @@ describe('Notification API Integration Tests', () => {
       expect(response.body.success).toBe(true)
       expect(Array.isArray(response.body.data)).toBe(true)
       expect(typeof response.body.count).toBe('number')
+    })
+  })
+
+  describe('Notification Forwarding to Slack', () => {
+    it('should forward Warning notifications to Slack', async () => {
+      const notification = {
+        type: 'Warning',
+        name: 'Test Warning',
+        description: 'This is a test warning',
+      }
+
+      const response = await request(app)
+        .post('/api/v1/notification')
+        .send(notification)
+        .expect(200)
+
+      expect(response.body.success).toBe(true)
+      expect(response.body.forwarded).toBe(true)
+    })
+
+    it('should not forward Info notifications to Slack', async () => {
+      const notification = {
+        type: 'Info',
+        name: 'Test Info',
+        description: 'This is a test info',
+      }
+
+      const response = await request(app)
+        .post('/api/v1/notification')
+        .send(notification)
+        .expect(200)
+
+      expect(response.body.success).toBe(true)
+      expect(response.body.forwarded).toBe(false)
     })
   })
 })

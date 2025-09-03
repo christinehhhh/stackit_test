@@ -11,6 +11,7 @@ const slackService = new SlackService(
 
 export const notificationController = {
   createNotification: async (req: Request, res: Response) => {
+    let forwarded = false
     try {
       const notification: Notification = req.body
 
@@ -37,7 +38,7 @@ export const notificationController = {
       storageService.storeNotification(notification)
 
       if (notification.type === 'Warning') {
-        const forwarded = await slackService.forwardNotification(notification)
+        forwarded = await slackService.forwardNotification(notification)
         console.log('Slack notification forwarded:', forwarded)
       }
 
@@ -46,6 +47,7 @@ export const notificationController = {
         message: 'Notification received successfully',
         data: notification,
         storedCount: storageService.getNotificationCount(),
+        forwarded: forwarded,
       })
     } catch (error) {
       console.error('Error processing notification:', error)
