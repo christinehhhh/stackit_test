@@ -1,8 +1,13 @@
 import { Request, Response } from 'express'
+import { SlackService } from '../services/slackService'
 import { StorageService } from '../services/storageService'
 import { Notification } from '../types/notification'
 
 const storageService = new StorageService()
+const slackService = new SlackService(
+  process.env.SLACK_TOKEN!,
+  process.env.SLACK_CHANNEL!
+)
 
 export const notificationController = {
   createNotification: async (req: Request, res: Response) => {
@@ -30,6 +35,11 @@ export const notificationController = {
       console.log('Received notification:', notification)
 
       storageService.storeNotification(notification)
+
+      if (notification.type === 'Warning') {
+        const forwarded = await slackService.forwardNotification(notification)
+        console.log('Slack notification forwarded:', forwarded)
+      }
 
       res.status(200).json({
         success: true,
